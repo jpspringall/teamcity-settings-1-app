@@ -1,4 +1,19 @@
-import jetbrains.buildServer.configs.kotlin.*
+
+import CommonSteps.buildAndTest
+import CommonSteps.createParameters
+import CommonSteps.printPullRequestNumber
+import CommonSteps.runMakeTest
+import CommonSteps.runSonarScript
+import jetbrains.buildServer.configs.kotlin.BuildType
+import jetbrains.buildServer.configs.kotlin.Project
+import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
+import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
+import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
+import jetbrains.buildServer.configs.kotlin.project
+import jetbrains.buildServer.configs.kotlin.triggers.vcs
+import jetbrains.buildServer.configs.kotlin.ui.add
+import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
+import jetbrains.buildServer.configs.kotlin.version
 
 /*
 The settings script is an entry point for defining a TeamCity
@@ -24,5 +39,132 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 
 version = "2023.11"
 
-project {
+var project = Project {
+    vcsRoot(HttpsGithubComJpspringallKotlinTeamCitySettings1)
+    vcsRoot(HttpsGithubComJpspringallKotlinTeamCitySettings1)
+    buildType(Build)
+    buildType(PullRequestBuild)
 }
+
+
+
+
+object Build : BuildType({
+    name = "Master Build"
+
+    vcs {
+        root(HttpsGithubComJpspringallKotlinTeamCitySettings1)
+        cleanCheckout = true
+        excludeDefaultBranchChanges = true
+    }
+
+    params {
+        param("git.branch.specification", "")
+    }
+
+    createParameters()
+
+    printPullRequestNumber()
+
+    runMakeTest()
+
+    buildAndTest()
+
+    runSonarScript()
+
+    triggers {
+        vcs {
+        }
+    }
+
+    features {}
+})
+
+object PullRequestBuild : BuildType({
+    name = "Pull Request Build"
+
+    vcs {
+        root(HttpsGithubComJpspringallKotlinTeamCitySettings1)
+        cleanCheckout = true
+        excludeDefaultBranchChanges = true
+    }
+
+    params {
+        param("git.branch.specification", "+:refs/pull/*/merge")
+    }
+    createParameters()
+
+    printPullRequestNumber()
+
+    runMakeTest()
+
+    buildAndTest()
+
+    runSonarScript()
+
+    triggers {
+        vcs {
+        }
+    }
+
+    features {
+        commitStatusPublisher {
+            vcsRootExtId = "${HttpsGithubComJpspringallKotlinTeamCitySettings1.id}"
+            publisher = github {
+                githubUrl = "https://api.github.com"
+                authType = vcsRoot()
+            }
+        }
+        pullRequests {
+            vcsRootExtId = "${HttpsGithubComJpspringallKotlinTeamCitySettings1.id}"
+            provider = github {
+                authType = vcsRoot()
+                filterSourceBranch = "refs/pull/*/merge"
+                filterAuthorRole = PullRequests.GitHubRoleFilter.MEMBER
+            }
+        }
+    }
+})
+
+object HttpsGithubComJpspringallKotlinTeamCitySettings1 : GitVcsRoot({
+    name = "Kotlin VCS Root"
+    url = "https://github.com/jpspringall/teamcity-settings-1"
+    branch = "refs/heads/main"
+    agentCleanPolicy = GitVcsRoot.AgentCleanPolicy.ALWAYS
+    checkoutPolicy = GitVcsRoot.AgentCheckoutPolicy.NO_MIRRORS
+    authMethod = password {
+        userName = "%github.vcsroot.username%"
+        password = "%github.vcsroot.password%"
+    }
+})
+
+
+for (bt : BuildType in project.buildTypes ) {
+    val gitSpec = bt.params.findRawParam("git.branch.specification")
+    if (gitSpec != null && gitSpec.value.isNotBlank()) {
+        bt.vcs.branchFilter = """
+            +:*
+            -:<default>
+        """.trimIndent()
+    }
+    if (bt.name == "Pull Request Build" || bt.name == "Master Build") {
+        bt.features.add {
+            feature {
+                type = "xml-report-plugin"
+                param("verbose", "true")
+                param("xmlReportParsing.reportType", "trx")
+                param("xmlReportParsing.reportDirs","%system.teamcity.build.checkoutDir%/test-results/**/*.trx")
+            }
+        }
+    }
+//    if (bt.name == "Pull Request Build" || bt.name == "Master Build")
+//    {
+//        bt.features.add {  xmlReport {
+//            reportType = XmlReport.XmlReportType.TRX
+//            rules = "%system.teamcity.build.checkoutDir%/test-results/**/*.trx" //Remember to match this in test output
+//            verbose = true
+//        } }
+//    }
+}
+
+project(project)
