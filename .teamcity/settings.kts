@@ -41,7 +41,6 @@ version = "2023.11"
 
 var project = Project {
     vcsRoot(HttpsGithubComJpspringallKotlinTeamCitySettings1)
-    vcsRoot(HttpsGithubComJpspringallKotlinTeamCitySettings1)
     buildType(Build)
     buildType(PullRequestBuild)
 }
