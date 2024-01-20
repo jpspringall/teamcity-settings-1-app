@@ -96,13 +96,17 @@ object PullRequestBuild : BuildType({
             vcsRootExtId = "${HttpsGithubComJpspringallKotlinTeamCitySettings1.id}"
             publisher = github {
                 githubUrl = "https://api.github.com"
-                authType = vcsRoot()
+                authType = personalToken {
+                    token = "credentialsJSON:a75b57d5-0461-4052-b9c6-58dfd9f2ee53" // This is the PAT
+                }
             }
         }
         pullRequests {
             vcsRootExtId = "${HttpsGithubComJpspringallKotlinTeamCitySettings1.id}"
             provider = github {
-                authType = vcsRoot()
+                authType = token {
+                    token = "credentialsJSON:a75b57d5-0461-4052-b9c6-58dfd9f2ee53" // This is the PAT
+                }
                 filterSourceBranch = "refs/pull/*/merge"
                 filterAuthorRole = PullRequests.GitHubRoleFilter.MEMBER
             }
