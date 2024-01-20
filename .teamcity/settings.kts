@@ -118,6 +118,7 @@ object HttpsGithubComJpspringallKotlinTeamCitySettings1 : GitVcsRoot({
     name = "Kotlin VCS Root"
     url = "https://github.com/jpspringall/teamcity-settings-1"
     branch = "refs/heads/main"
+    branchSpec = "%git.branch.specification%"
     agentCleanPolicy = GitVcsRoot.AgentCleanPolicy.ALWAYS
     checkoutPolicy = GitVcsRoot.AgentCheckoutPolicy.NO_MIRRORS
     authMethod = password {
