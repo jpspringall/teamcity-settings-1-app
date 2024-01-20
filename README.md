@@ -1,4 +1,4 @@
 # teamcity-settings
 
 PR TEST
-Final
+App
