@@ -2,6 +2,7 @@
 import CommonSteps.createParameters
 import CommonSteps.printPullRequestNumber
 import jetbrains.buildServer.configs.kotlin.BuildType
+import jetbrains.buildServer.configs.kotlin.DslContext
 import jetbrains.buildServer.configs.kotlin.Project
 import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
@@ -9,7 +10,6 @@ import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.project
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.ui.add
-import jetbrains.buildServer.configs.kotlin.vcs.GitVcsRoot
 import jetbrains.buildServer.configs.kotlin.version
 
 /*
@@ -37,7 +37,6 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 version = "2023.11"
 
 var project = Project {
-    vcsRoot(HttpsGithubComJpspringallKotlinTeamCitySettings1)
     buildType(Build)
     buildType(PullRequestBuild)
 }
@@ -49,7 +48,7 @@ object Build : BuildType({
     name = "Master Build"
 
     vcs {
-        root(HttpsGithubComJpspringallKotlinTeamCitySettings1)
+        root(DslContext.settingsRoot.id!!)
         cleanCheckout = true
         excludeDefaultBranchChanges = true
     }
@@ -74,7 +73,7 @@ object PullRequestBuild : BuildType({
     name = "Pull Request Build"
 
     vcs {
-        root(HttpsGithubComJpspringallKotlinTeamCitySettings1)
+        root(DslContext.settingsRoot.id!!)
         cleanCheckout = true
         excludeDefaultBranchChanges = true
     }
@@ -93,37 +92,20 @@ object PullRequestBuild : BuildType({
 
     features {
         commitStatusPublisher {
-            vcsRootExtId = "${HttpsGithubComJpspringallKotlinTeamCitySettings1.id}"
+            vcsRootExtId = "${DslContext.settingsRoot.id}"
             publisher = github {
                 githubUrl = "https://api.github.com"
-                authType = personalToken {
-                    token = "credentialsJSON:a75b57d5-0461-4052-b9c6-58dfd9f2ee53" // This is the PAT
-                }
+                authType = vcsRoot()
             }
         }
         pullRequests {
-            vcsRootExtId = "${HttpsGithubComJpspringallKotlinTeamCitySettings1.id}"
+            vcsRootExtId = "${DslContext.settingsRoot.id}"
             provider = github {
-                authType = token {
-                    token = "credentialsJSON:a75b57d5-0461-4052-b9c6-58dfd9f2ee53" // This is the PAT
-                }
+                authType = vcsRoot()
                 filterSourceBranch = "refs/pull/*/merge"
                 filterAuthorRole = PullRequests.GitHubRoleFilter.MEMBER
             }
         }
-    }
-})
-
-object HttpsGithubComJpspringallKotlinTeamCitySettings1 : GitVcsRoot({
-    name = "Kotlin VCS Root"
-    url = "https://github.com/jpspringall/teamcity-settings-1"
-    branch = "refs/heads/main"
-    branchSpec = "%git.branch.specification%"
-    agentCleanPolicy = GitVcsRoot.AgentCleanPolicy.ALWAYS
-    checkoutPolicy = GitVcsRoot.AgentCheckoutPolicy.NO_MIRRORS
-    authMethod = password {
-        userName = "%github.vcsroot.username%"
-        password = "%github.vcsroot.password%"
     }
 })
 

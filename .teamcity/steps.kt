@@ -16,13 +16,15 @@ object CommonSteps {
     ) {
         steps {
             script {
-                name = "Print Pull Request Number"
+                name = "Print Pull Request Number from app"
                 scriptContent = """
                 #!/bin/bash
                 id=%teamcity.pullRequest.number%
                 echo "Id is: ${'$'}id"
                 branch="pull/${'$'}id"
                 echo "Branch is: ${'$'}branch"
+                
+                echo "Step from app"
             """.trimIndent()
             }
         }
